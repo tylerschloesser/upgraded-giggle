@@ -9,9 +9,12 @@ import {
 import invariant from 'tiny-invariant'
 import './index.scss'
 
+type OnChangeFn = React.ChangeEventHandler<HTMLInputElement>
+
 interface User {
   name: string
   word: string | null
+  guesses: string[]
 }
 
 type UserId = 'p1' | 'p2'
@@ -33,8 +36,8 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: '/choose-word/:userId',
-    element: <ChooseWord />,
+    path: '/choose/:userId',
+    element: <Choose />,
   },
   {
     path: '/guess/:userId',
@@ -49,14 +52,14 @@ function useUserId(): { active: UserId; opponent: UserId } {
   return { active: params.userId, opponent }
 }
 
-function ChooseWord() {
+function Choose() {
   const context = useContext(AppContext)
   const userId = useUserId()
   const [value, setValue] = useState('')
 
   const navigate = useNavigate()
 
-  const onChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  const onChange: OnChangeFn = (event) => {
     setValue(event.target.value)
   }
 
@@ -68,7 +71,7 @@ function ChooseWord() {
     context.setWord(userId.active, value)
 
     if (context.state.users[userId.opponent].word === null) {
-      navigate(`/choose-word/${userId.opponent}`)
+      navigate(`/choose/${userId.opponent}`)
     } else {
       navigate('/guess/p1')
     }
@@ -76,6 +79,7 @@ function ChooseWord() {
 
   return (
     <>
+      <h2>Choose</h2>
       <input value={value} onChange={onChange} />
       <button disabled={!valid} onPointerUp={onChoose}>
         Choose
@@ -85,7 +89,16 @@ function ChooseWord() {
 }
 
 function Guess() {
-  return <>TODO</>
+  const [value, setValue] = useState('')
+  const onChange: OnChangeFn = (event) => {
+    setValue(event.target.value)
+  }
+  return (
+    <>
+      <h2>Guess</h2>
+      <input value={value} onChange={onChange} />
+    </>
+  )
 }
 
 function Home() {
@@ -93,7 +106,7 @@ function Home() {
   return (
     <button
       onPointerUp={() => {
-        navigate('/choose-word/p1')
+        navigate('/choose/p1')
       }}
     >
       Start Game
@@ -111,10 +124,12 @@ function loadState(): AppState {
       p1: {
         name: 'Player 1',
         word: null,
+        guesses: [],
       },
       p2: {
         name: 'Player 2',
         word: null,
+        guesses: [],
       },
     },
   }
@@ -140,6 +155,7 @@ function App() {
   const reset = () => {
     localStorage.removeItem('state')
     setState(loadState())
+    location.href = '/'
   }
 
   return (
