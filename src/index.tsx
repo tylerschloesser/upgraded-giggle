@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
 import './index.scss'
 
@@ -11,6 +12,13 @@ interface AppContext {
 }
 
 const AppContext = React.createContext<AppContext>(null!)
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Home />,
+  },
+])
 
 function Home() {
   const context = useContext(AppContext)
@@ -25,7 +33,7 @@ function App() {
   return (
     <AppContext.Provider value={context}>
       <h1>Word Game</h1>
-      <Home />
+      <RouterProvider router={router} />
     </AppContext.Provider>
   )
 }
