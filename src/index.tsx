@@ -25,6 +25,8 @@ interface AppState {
 
 interface AppContext {
   setWord(userId: UserId, word: string): void
+  addGuess(userId: UserId, guess: string): void
+  isGuessValid(userId: UserId, guess: string): boolean
   state: AppState
 }
 
@@ -89,14 +91,29 @@ function Choose() {
 }
 
 function Guess() {
+  const userId = useUserId()
+  const { isGuessValid, addGuess } = useContext(AppContext)
   const [value, setValue] = useState('')
   const onChange: OnChangeFn = (event) => {
     setValue(event.target.value)
   }
+  const navigate = useNavigate()
+
+  const valid = isGuessValid(userId.active, value)
+
+  const onGuess = () => {
+    if (!valid) return
+    addGuess(userId.active, value)
+    navigate(`/guess/${userId.opponent}`)
+  }
+
   return (
     <>
       <h2>Guess</h2>
       <input value={value} onChange={onChange} />
+      <button disabled={!valid} onPointerUp={onGuess}>
+        Guess
+      </button>
     </>
   )
 }
@@ -141,7 +158,7 @@ function saveState(state: AppState): void {
 
 function App() {
   const [state, setState] = useState<AppState>(loadState())
-  function setWord(userId: UserId, word: string): void {
+  const setWord: AppContext['setWord'] = (userId, word) => {
     setState((prev) => {
       prev.users[userId].word = word
       return { ...prev }
@@ -158,11 +175,25 @@ function App() {
     location.href = '/'
   }
 
+  const isGuessValid: AppContext['isGuessValid'] = (userId, guess) => {
+    return true
+  }
+
+  const addGuess: AppContext['addGuess'] = (userId, guess) => {
+    invariant(isGuessValid(userId, guess))
+    setState((prev) => {
+      prev.users[userId].guesses.unshift(guess)
+      return { ...prev }
+    })
+  }
+
   return (
     <AppContext.Provider
       value={{
         state,
         setWord,
+        addGuess,
+        isGuessValid,
       }}
     >
       <h1>Word Game</h1>
